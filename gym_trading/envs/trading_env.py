@@ -27,8 +27,7 @@ class QuandlEnvSrc(object):
 
   MinPercentileDays = 100 
   QuandlAuthToken = ""
-  Name = "GOOG/NYSE_SPY"#"GOOG/NYSE_IBM"
-
+  Name = "GOOG/NYSE_SPY" #"GOOG/NYSE_IBM"
 
   def __init__(self, name=Name, auth=QuandlAuthToken, scale=True):
     self.name = name

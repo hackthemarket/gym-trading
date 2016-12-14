@@ -24,3 +24,5 @@ cost (so that not trading isn't really viable).
 interest rate environment).  Default value: 1 bps.
 
 ...
+
+See [here](https://github.com/hackthemarket/gym-trading/blob/master/gym_trading/envs/TradingEnv.ipynb) for a jupyter notebook describing basic usage.
