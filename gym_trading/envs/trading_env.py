@@ -26,7 +26,7 @@ class QuandlEnvSrc(object):
   '''
 
   MinPercentileDays = 100 
-  QuandlAuthToken = "sCGfc5f6ph5H2wLATVVW"
+  QuandlAuthToken = ""
   Name = "GOOG/NYSE_SPY"#"GOOG/NYSE_IBM"
 
 
