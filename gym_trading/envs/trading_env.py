@@ -101,8 +101,9 @@ class TradingEnv(gym.Env):
     
     trade = p - self.position 
     trade_costs = self.nav * abs(trade) * self.trading_cost_bps 
-    costs_bps = trade_costs + self.time_cost_bps 
-    daypnl = self.nav * ((self.position * yret) - costs_bps )
+    costs = trade_costs + (self.nav * self.time_cost_bps)
+    
+    daypnl = self.nav * ((self.position * yret) - costs )
     reward = daypnl
     self.nav = self.nav + daypnl
     self.position = p
@@ -122,7 +123,7 @@ class TradingEnv(gym.Env):
     #if done:
       #log.info('final NAV: %f', self.nav)
       
-    info = { 'daypnl': daypnl, 'nav':self.nav, 'costs_bps':costs_bps }
+    info = { 'daypnl': daypnl, 'nav':self.nav, 'costs':costs }
 
     return observation, reward, done, info
   
