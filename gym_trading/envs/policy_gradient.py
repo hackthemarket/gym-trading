@@ -18,7 +18,7 @@ import pandas as pd
 import trading_env as te
 
 log = logging.getLogger(__name__)
-#log.addHandler(logging.StreamHandler())
+log.setLevel(logging.INFO)
 log.info('%s logger started.',__name__)
 
 class PolicyGradient(object) :
@@ -106,6 +106,8 @@ class PolicyGradient(object) :
                 print("Model restored from ",ckpt.model_checkpoint_path)
             else:
                 print('No checkpoint found at: ',model_dir)
+        if not os.path.exists(model_dir):
+            os.makedirs(model_dir)
 
         episode = 0
         observation = env.reset()
@@ -114,9 +116,11 @@ class PolicyGradient(object) :
         reward_sum = 0
         # training loop
         day = 0
-        arors = np.zeros(episodes)
-        sharpes = np.zeros(episodes)
-        while episode < episodes:
+        simrors = np.zeros(episodes)
+        mktrors = np.zeros(episodes)
+        alldf = None
+        victory = False
+        while episode < episodes and not victory:
             # stochastically sample a policy from the network
             x = observation
             feed = {self._tf_x: np.reshape(x, (1,-1))}
@@ -144,25 +148,33 @@ class PolicyGradient(object) :
                 xs,rs,ys = [],[],[] # reset game history
                 df = env.sim.to_df()
                 #pdb.set_trace()
-                arors[episode]=df.bod_nav.values[-1]-1
-                sharpes[episode]= te._sharpe(df.sim_return)
-                if sharpes[episode] < -1000:
-                    pdb.set_trace()
+                simrors[episode]=df.bod_nav.values[-1]-1 # compound returns
+                mktrors[episode]=df.mkt_nav.values[-1]-1
+
+                alldf = df if alldf is None else pd.concat([alldf,df], axis=0)
                 
                 feed = {self._tf_x: epx, self._tf_epr: epr, self._tf_y: epy}
                 _ = self._sess.run(self._train_op,feed) # parameter update
 
-                # print some updates
                 if episode % log_freq == 0:
-                    print('ep : {}, reward: {}, mean reward: {}, mean sharpe: {}'.format(
-                             episode, reward_sum, running_reward, np.nanmean(sharpes)))
+                    log.info('year #%6d, mean reward: %8.4f, sim ret: %8.4f, mkt ret: %8.4f, net: %8.4f', episode,
+                             running_reward, simrors[episode],mktrors[episode], simrors[episode]-mktrors[episode])
                     save_path = self._saver.save(self._sess, model_dir+'model.ckpt',
                                                  global_step=episode+1)
-                    print("Model saved in file: {}".format(save_path))
+                    if episode > 100:
+                        vict = pd.DataFrame( { 'sim': simrors[episode-100:episode],
+                                               'mkt': mktrors[episode-100:episode] } )
+                        vict['net'] = vict.sim - vict.mkt
+                        if vict.net.mean() > 0.0:
+                            victory = True
+                            log.info('Congratulations, Warren Buffet!  You won the trading game.')
+                    #print("Model saved in file: {}".format(save_path))
 
-                # book-keeping
+                
+                    
                 episode += 1
-                observation = env.reset() # reset env
+                observation = env.reset()
                 reward_sum = 0
                 day = 0
-        return pd.DataFrame({'sharpe':sharpes,'aror':arors})
+                
+        return alldf, pd.DataFrame({'simror':simrors,'mktror':mktrors})

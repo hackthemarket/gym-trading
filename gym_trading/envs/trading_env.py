@@ -91,6 +91,7 @@ class TradingSim(object) :
     self.step             = 0
     self.actions          = np.zeros(self.steps)
     self.navs             = np.ones(self.steps)
+    self.mkt_nav         = np.ones(self.steps)
     self.strat_retrns     = np.ones(self.steps)
     self.posns            = np.zeros(self.steps)
     self.costs            = np.zeros(self.steps)
@@ -101,6 +102,7 @@ class TradingSim(object) :
     self.step = 0
     self.actions.fill(0)
     self.navs.fill(1)
+    self.mkt_nav.fill(1)
     self.strat_retrns.fill(0)
     self.posns.fill(0)
     self.costs.fill(0)
@@ -113,6 +115,7 @@ class TradingSim(object) :
 
     bod_posn = 0.0 if self.step == 0 else self.posns[self.step-1]
     bod_nav  = 1.0 if self.step == 0 else self.navs[self.step-1]
+    mkt_nav  = 1.0 if self.step == 0 else self.mkt_nav[self.step-1]
 
     self.mkt_retrns[self.step] = retrn
     self.actions[self.step] = action
@@ -127,6 +130,7 @@ class TradingSim(object) :
 
     if self.step != 0 :
       self.navs[self.step] =  bod_nav * (1 + self.strat_retrns[self.step-1])
+      self.mkt_nav[self.step] =  mkt_nav * (1 + self.mkt_retrns[self.step-1])
     
     info = { 'reward': reward, 'nav':self.navs[self.step], 'costs':self.costs[self.step] }
 
@@ -135,12 +139,13 @@ class TradingSim(object) :
 
   def to_df(self):
     """returns internal state in new dataframe """
-    cols = ['action', 'bod_nav', 'mkt_return','sim_return',
+    cols = ['action', 'bod_nav', 'mkt_nav','mkt_return','sim_return',
             'position','costs', 'trade' ]
     rets = _prices2returns(self.navs)
     #pdb.set_trace()
     df = pd.DataFrame( {'action':     self.actions, # today's action (from agent)
                           'bod_nav':    self.navs,    # BOD Net Asset Value (NAV)
+                          'mkt_nav':  self.mkt_nav, 
                           'mkt_return': self.mkt_retrns,
                           'sim_return': self.strat_retrns,
                           'position':   self.posns,   # EOD position
@@ -247,6 +252,6 @@ class TradingEnv(gym.Env):
       if write_log:
         df.to_csv(logfile, mode='a')
         if return_df:
-          alldf = df if alldf is None else pd.concat(alldf,df, axis=1)
+          alldf = df if alldf is None else pd.concat([alldf,df], axis=0)
             
     return alldf
