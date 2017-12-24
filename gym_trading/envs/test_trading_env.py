@@ -1,6 +1,6 @@
 import gym
 
-#import gym_trading
+import gym_trading
 import pandas as pd
 import numpy as np
 import trading_env as te
@@ -29,12 +29,12 @@ for _ in range(Episodes):
             print reward
             print count
         
-df = env.sim.to_df()
+df = env.env.sim.to_df()
 
 df.head()
 df.tail()
 
 buyhold = lambda x,y : 2
-df = env.run_strat( buyhold )
+df = env.env.run_strat( buyhold )
 
-df10 = env.run_strats( buyhold, episodes )
+df10 = env.env.run_strats( buyhold, Episodes )
