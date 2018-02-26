@@ -190,7 +190,7 @@ class TradingEnv(gym.Env):
     self.action_space = spaces.Discrete( 3 )
     self.observation_space= spaces.Box( self.src.min_values,
                                         self.src.max_values)
-    self.reset()
+    self._reset()
 
   def _configure(self, display=None):
     self.display = display
@@ -224,7 +224,7 @@ class TradingEnv(gym.Env):
   
   def run_strat(self,  strategy, return_df=True):
     """run provided strategy, returns dataframe with all steps"""
-    observation = self.reset()
+    observation = self._reset()
     done = False
     while not done:
       action = strategy( observation, self ) # call strategy
